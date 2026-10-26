@@ -1,4 +1,3 @@
-
 name: Build Jawwal Pay APK
 
 on:
@@ -17,6 +16,12 @@ jobs:
     steps:
       - name: Download source
         uses: actions/checkout@v4
+
+      - name: Unpack project ZIP (only if package.json is missing)
+        run: |
+          if [ ! -f package.json ]; then
+            unzip -oq ./*.zip || { echo "::error::No package.json and no .zip found in the repo root"; exit 1; }
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
