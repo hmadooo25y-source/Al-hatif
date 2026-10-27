@@ -17,11 +17,13 @@ jobs:
       - name: Download source
         uses: actions/checkout@v4
 
-      - name: Unpack project ZIP (only if package.json is missing)
+      - name: Unpack uploaded ZIP files
         run: |
-          if [ ! -f package.json ]; then
-            unzip -oq ./*.zip || { echo "::error::No package.json and no .zip found in the repo root"; exit 1; }
-          fi
+          for z in ./*.zip; do
+            [ -e "$z" ] || continue
+            unzip -oq "$z"
+          done
+          [ -f package.json ] || { echo "::error::package.json not found in the repo root"; exit 1; }
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -43,6 +45,15 @@ jobs:
       - name: Sync app files
         run: npx cap sync android
 
+      - name: Apply app icon
+        run: |
+          if [ -d icon-res ]; then
+            cp -r icon-res/. android/app/src/main/res/
+            echo "App icon applied"
+          else
+            echo "::notice::icon-res not found - building with the default icon"
+          fi
+
       - name: Build APK
         working-directory: android
         run: |
@@ -54,3 +65,26 @@ jobs:
         with:
           name: Jawwal-Pay-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
+name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Create Android project
+        run: npx cap add android
+
+      - name: Sync app files
+        run: npx cap sync android
+
+      - name: Apply app icon
+        run: |
+          if [ -d icon-res ]; then
